@@ -9,6 +9,8 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true })
@@ -32,8 +34,8 @@ export const tasks = pgTable(
       .notNull(),
     title: text('title').notNull(),
     description: text('description').notNull(),
-    status: statusEnum('status').notNull().default('active'),
-    completed: boolean('completed').notNull().default(false),
+    status: statusEnum('status').notNull().default('pending'),
+    completed: boolean().notNull().default(false),
     ...timestamps,
   },
   (table) => [
@@ -46,3 +48,29 @@ export const tasks = pgTable(
     ),
   ]
 );
+
+export const selectTasksSchema = createSelectSchema(tasks);
+
+// Create base insert schema
+const baseInsertSchema = createInsertSchema(tasks);
+
+// Extend the base schema with custom validations
+export const insertTasksSchema = baseInsertSchema
+  .extend({
+    title: z.string().min(1).max(500),
+    description: z.string().min(1),
+    status: z.enum(statuses),
+    completed: z.boolean(),
+  })
+  .pick({
+    title: true,
+    description: true,
+    status: true,
+    completed: true,
+  });
+
+export const patchTasksSchema = insertTasksSchema.partial();
+
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
+export type UpdateTask = Partial<NewTask>;
