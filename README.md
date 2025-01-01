@@ -69,6 +69,63 @@ pnpm start
 - Health check: `http://localhost:4000/healthcheck`
 - Metrics: `http://localhost:4000/metrics`
 
+## Monitoring & Observability
+
+### Logging
+
+- Structured JSON logging
+- Log levels (debug, info, warn, error)
+- Request/Response correlation IDs
+- Performance metrics logging
+
+### Metrics Collection
+
+The application uses Prometheus and Grafana for metrics visualization:
+
+```sh
+# Start monitoring stack
+docker compose up -d prometheus grafana
+```
+
+Access points:
+
+- Grafana: `http://localhost:3000` (admin/password)
+- Prometheus: `http://localhost:9090`
+
+Available metrics:
+
+- HTTP request counts and latencies
+- Database query performance
+- Node.js runtime metrics (memory, CPU, GC)
+- Custom business metrics
+
+### ⚠️ Security Considerations
+
+The metrics endpoint (`/metrics`) should NOT be publicly exposed because:
+
+1. Potential DoS vector through frequent polling
+2. Exposes internal system information
+3. High resource consumption for metric generation
+
+Best practices:
+
+- Use separate port for metrics
+- Implement authentication
+- Use reverse proxy with IP whitelist
+- Set rate limits
+
+Example secure nginx configuration:
+
+```nginx
+location /metrics {
+    auth_basic "Metrics";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    proxy_pass http://localhost:4000;
+    allow 10.0.0.0/8;  # Internal network
+    deny all;
+}
+```
+
 ## Project Structure
 
 ```
