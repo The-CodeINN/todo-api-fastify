@@ -1,7 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { PostgresError as PostgresErrorEnum } from 'pg-error-enum';
 import { PostgresError } from 'postgres';
-import { NotFoundError } from './task.service';
 
 import { httpError } from '../../utils/http';
 import { StatusCodes } from 'http-status-codes';
@@ -17,6 +16,7 @@ import {
   getTasks,
   deleteTask,
   updateTask,
+  NotFoundError,
 } from './task.service';
 
 export async function createTaskHandler(
