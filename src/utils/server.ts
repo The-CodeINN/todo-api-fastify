@@ -49,6 +49,10 @@ export async function buildServer({ db }: { db: DB }) {
           url: `http://localhost:${config.PORT}`,
           description: 'Development server',
         },
+        {
+          url: `https://todo-api-fastify-production.up.railway.app/`,
+          description: 'Production server',
+        },
       ],
     },
     transform: jsonSchemaTransform,
