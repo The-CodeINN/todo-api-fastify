@@ -61,8 +61,53 @@ export async function buildServer({ db }: { db: DB }) {
   await fastify.register(fastifySwaggerUi, {
     routePrefix: '/docs',
     uiConfig: {
-      docExpansion: 'full',
-      deepLinking: false,
+      docExpansion: 'list',
+      deepLinking: true,
+      displayRequestDuration: true,
+      filter: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+      tryItOutEnabled: true,
+      syntaxHighlight: {
+        activate: true,
+        theme: 'monokai',
+      },
+    },
+    theme: {
+      title: 'Todo API Documentation',
+      favicon: [
+        {
+          filename: 'favicon-32x32.png',
+          rel: 'icon',
+          sizes: '32x32',
+          type: 'image/png',
+          content: await fs.readFile(
+            path.join(process.cwd(), 'public/favicon-32x32.png')
+          ),
+        },
+        {
+          filename: 'favicon-16x16.png',
+          rel: 'icon',
+          sizes: '16x16',
+          type: 'image/png',
+          content: await fs.readFile(
+            path.join(process.cwd(), 'public/favicon-16x16.png')
+          ),
+        },
+      ],
+      css: [
+        {
+          filename: 'custom.css',
+          content: `
+            .swagger-ui .topbar { display: none }
+            .swagger-ui .info { margin: 20px 0 }
+            .swagger-ui .info .title { color: #2c3e50 }
+            .swagger-ui .opblock-tag { font-size: 18px }
+            .swagger-ui .opblock { margin: 0 0 15px }
+            .swagger-ui section.models { margin: 30px 0 }
+          `,
+        },
+      ],
     },
   });
 
