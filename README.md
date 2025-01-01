@@ -35,8 +35,17 @@ METRICS_PREFIX=app_      # Metrics prefix (default: app_)
 # Install dependencies
 pnpm install
 
-# Run database migrations
-pnpm run migrate
+# Generate database schema
+pnpm run db:migrate
+
+# Run the migrations
+pnpm run db:migrate
+
+# Push the migrations to the database
+pnpm run db:push
+
+# Open the database studio
+pnpm run db:studio
 ```
 
 ## Running the API

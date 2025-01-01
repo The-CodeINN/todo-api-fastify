@@ -37,16 +37,16 @@ export const tasks = pgTable(
     status: statusEnum('status').notNull().default('pending'),
     completed: boolean().notNull().default(false),
     ...timestamps,
-  },
-  (table) => [
-    index('search_index').using(
-      'gin',
-      sql`(
-          setweight(to_tsvector('english', ${table.title}), 'A') ||
-          setweight(to_tsvector('english', ${table.description}), 'B')
-      )`
-    ),
-  ]
+  }
+  // (table) => [
+  //   index('search_index').using(
+  //     'gin',
+  //     sql`(
+  //         setweight(to_tsvector('english', ${table.title}), 'A') ||
+  //         setweight(to_tsvector('english', ${table.description}), 'B')
+  //     )`
+  //   ),
+  // ]
 );
 
 export const selectTasksSchema = createSelectSchema(tasks);

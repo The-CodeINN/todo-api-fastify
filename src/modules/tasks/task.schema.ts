@@ -5,8 +5,6 @@ import {
   insertTasksSchema,
 } from '../../db/schema';
 import { errorResponses } from '../../utils/http';
-import jsonContentRequired from '../../helpers/json-content-required';
-import jsonContent from '../../helpers/json-content';
 import IdParamsSchema from '../../helpers/id-params';
 
 const tags = ['tasks'] as const;
@@ -23,7 +21,7 @@ export const createTaskSchema = {
 export const getTasksSchema = {
   tags: tags,
   response: {
-    200: jsonContent(z.array(selectTasksSchema), 'List of tasks'),
+    200: z.array(selectTasksSchema),
     ...errorResponses,
   },
 } as const;
@@ -32,7 +30,7 @@ export const getTaskSchema = {
   tags: tags,
   params: IdParamsSchema,
   response: {
-    200: jsonContent(selectTasksSchema, 'The task'),
+    200: selectTasksSchema,
     ...errorResponses,
   },
 } as const;
@@ -40,9 +38,9 @@ export const getTaskSchema = {
 export const updateTaskSchema = {
   tags: tags,
   params: IdParamsSchema,
-  body: jsonContent(patchTasksSchema, 'Task to update'),
+  body: patchTasksSchema,
   response: {
-    200: jsonContent(selectTasksSchema, 'The updated task'),
+    200: selectTasksSchema,
     ...errorResponses,
   },
 } as const;
@@ -51,9 +49,7 @@ export const deleteTaskSchema = {
   tags: tags,
   params: IdParamsSchema,
   response: {
-    204: {
-      description: 'Task deleted',
-    },
+    204: z.object({}),
     ...errorResponses,
   },
 } as const;

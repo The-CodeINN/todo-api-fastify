@@ -1,6 +1,6 @@
-import { InferInsertModel, and, eq } from 'drizzle-orm';
-import { tasks } from '../../db/schema';
+import { and, eq } from 'drizzle-orm';
 import {
+  tasks,
   selectTasksSchema,
   insertTasksSchema,
   patchTasksSchema,
@@ -15,12 +15,19 @@ const inputSchema = {
   update: patchTasksSchema,
 };
 
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+
 export async function createTask(
   input: input<typeof inputSchema.create>,
   db: DB
 ) {
   const metricsLabels = {
-    operations: 'create_task',
+    operation: 'create_task',
     success: 'true',
   };
   const end = databaseQueryTimeHistogram.startTimer();
@@ -39,7 +46,7 @@ export async function createTask(
 
 export async function getTasks(db: DB) {
   const metricsLabels = {
-    operations: 'get_tasks',
+    operation: 'get_tasks',
     success: 'true',
   };
   const end = databaseQueryTimeHistogram.startTimer();
@@ -56,9 +63,9 @@ export async function getTasks(db: DB) {
   }
 }
 
-export async function getTask(id: number, db: DB) {
+export async function getTask(id: string, db: DB) {
   const metricsLabels = {
-    operations: 'get_task',
+    operation: 'get_task',
     success: 'true',
   };
   const end = databaseQueryTimeHistogram.startTimer();
@@ -66,26 +73,30 @@ export async function getTask(id: number, db: DB) {
   try {
     const result = await db.query.tasks.findFirst({
       where(fields, operators) {
-        return operators.eq(fields.id, id.toString());
+        return operators.eq(fields.id, id);
       },
     });
+
+    if (!result) {
+      throw new NotFoundError(`Task with ID ${id} not found`);
+    }
 
     end(metricsLabels);
     return result;
   } catch (error) {
     end({ ...metricsLabels, success: 'false' });
-    logger.error('Error getting task', error);
+    logger.error({ error, id }, 'Error getting task');
     throw error;
   }
 }
 
 export async function updateTask(
-  id: number,
+  id: string,
   input: input<typeof inputSchema.update>,
   db: DB
 ) {
   const metricsLabels = {
-    operations: 'update_task',
+    operation: 'update_task',
     success: 'true',
   };
   const end = databaseQueryTimeHistogram.startTimer();
@@ -93,33 +104,44 @@ export async function updateTask(
   try {
     const result = await db
       .update(tasks)
-      .set(input)
-      .where(and(eq(tasks.id, id.toString())))
+      .set({
+        ...input,
+        updatedAt: new Date(),
+      })
+      .where(eq(tasks.id, id))
       .returning();
+
+    if (!result.length) {
+      throw new NotFoundError(`Task with ID ${id} not found`);
+    }
 
     end(metricsLabels);
     return result[0];
   } catch (error) {
     end({ ...metricsLabels, success: 'false' });
-    logger.error('Error updating task', error);
+    logger.error({ error, id, input }, 'Error updating task');
     throw error;
   }
 }
 
-export async function deleteTask(id: number, db: DB) {
+export async function deleteTask(id: string, db: DB) {
   const metricsLabels = {
-    operations: 'delete_task',
+    operation: 'delete_task',
     success: 'true',
   };
   const end = databaseQueryTimeHistogram.startTimer();
 
   try {
-    await db.delete(tasks).where(and(eq(tasks.id, id.toString())));
+    const result = await db.delete(tasks).where(eq(tasks.id, id)).returning();
+
+    if (!result.length) {
+      throw new NotFoundError(`Task with ID ${id} not found`);
+    }
 
     end(metricsLabels);
   } catch (error) {
     end({ ...metricsLabels, success: 'false' });
-    logger.error('Error deleting task', error);
+    logger.error({ error, id }, 'Error deleting task');
     throw error;
   }
 }
