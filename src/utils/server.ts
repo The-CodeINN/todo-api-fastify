@@ -1,5 +1,5 @@
 import { taskRouter } from '../modules/tasks/task.router';
-import Fastify, { FastifyReply, FastifyRequest } from 'fastify';
+import Fastify from 'fastify';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import { promises as fs } from 'fs';
@@ -8,6 +8,7 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-type-provider-zod';
+import fastifyStatic from '@fastify/static';
 
 import { version } from '../../package.json';
 import { config } from '../config';
@@ -24,6 +25,12 @@ declare module 'fastify' {
 export async function buildServer({ db }: { db: DB }) {
   const fastify = Fastify({
     logger: true,
+  });
+
+  // Serve static files from public directory
+  await fastify.register(fastifyStatic, {
+    root: path.join(process.cwd(), 'public'),
+    prefix: '/',
   });
 
   // Add schema validator and serializer
@@ -70,7 +77,7 @@ export async function buildServer({ db }: { db: DB }) {
       tryItOutEnabled: true,
       syntaxHighlight: {
         activate: true,
-        theme: 'monokai',
+        theme: 'obsidian',
       },
     },
     theme: {

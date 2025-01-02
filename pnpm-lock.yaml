@@ -14,6 +14,9 @@ importers:
       '@fastify/secure-session':
         specifier: ^8.1.0
         version: 8.1.0
+      '@fastify/static':
+        specifier: ^8.0.3
+        version: 8.0.3
       '@fastify/swagger-ui':
         specifier: ^5.2.0
         version: 5.2.0
