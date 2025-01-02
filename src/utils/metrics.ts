@@ -23,6 +23,25 @@ export const databaseQueryTimeHistogram = new client.Histogram({
   labelNames: ['operation', 'success'] as const,
 });
 
+// Add rate limit metrics
+const rateLimitHitsCounter = new client.Counter({
+  name: `${config.METRICS_PREFIX}rate_limit_hits_total`,
+  help: 'Total number of rate limit hits',
+  labelNames: ['route', 'ip'] as const,
+});
+
+const rateLimitBlocksCounter = new client.Counter({
+  name: `${config.METRICS_PREFIX}rate_limit_blocks_total`,
+  help: 'Total number of requests blocked by rate limit',
+  labelNames: ['route', 'ip'] as const,
+});
+
+const rateLimitBansCounter = new client.Counter({
+  name: `${config.METRICS_PREFIX}rate_limit_bans_total`,
+  help: 'Total number of IPs banned by rate limit',
+  labelNames: ['ip'] as const,
+});
+
 export async function reqReplyTime(
   req: FastifyRequest<object>,
   reply: FastifyReply
@@ -48,3 +67,5 @@ export async function reqReplyTime(
 }
 
 export const prom = client;
+
+export { rateLimitHitsCounter, rateLimitBlocksCounter, rateLimitBansCounter };

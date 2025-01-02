@@ -9,10 +9,17 @@ import {
   validatorCompiler,
 } from 'fastify-type-provider-zod';
 import fastifyStatic from '@fastify/static';
+import fastifyRateLimit from '@fastify/rate-limit';
 
 import { version } from '../../package.json';
 import { config } from '../config';
-import { prom, reqReplyTime } from './metrics';
+import {
+  prom,
+  reqReplyTime,
+  rateLimitHitsCounter,
+  rateLimitBlocksCounter,
+  rateLimitBansCounter,
+} from './metrics';
 import path from 'path';
 import { DB } from '../db';
 
@@ -36,6 +43,38 @@ export async function buildServer({ db }: { db: DB }) {
   // Add schema validator and serializer
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.setSerializerCompiler(serializerCompiler);
+
+  // Add rate limiting
+  await fastify.register(fastifyRateLimit, {
+    max: config.RATE_LIMIT.MAX,
+    timeWindow: config.RATE_LIMIT.TIME_WINDOW,
+    ban: 3,
+    skipOnError: true,
+    hook: 'preHandler',
+    keyGenerator: (req) => {
+      return (
+        (Array.isArray(req.headers['x-api-key'])
+          ? req.headers['x-api-key'][0]
+          : req.headers['x-api-key']) || req.ip
+      );
+    },
+    enableDraftSpec: true,
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+      'retry-after': true,
+    },
+  });
+
+  // Specific rate limit for API docs
+  fastify.register(async function (fastify) {
+    await fastify.register(fastifyRateLimit, {
+      max: 30,
+      timeWindow: 60 * 1000,
+      prefix: '/docs',
+    });
+  });
 
   fastify.addHook('onRequest', async (req) => {
     req.db = db;
